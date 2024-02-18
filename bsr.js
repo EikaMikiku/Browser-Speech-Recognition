@@ -1,0 +1,5 @@
+export { BrowserSpeechRecognition };
+
+class BrowserSpeechRecognition {
+	
+}

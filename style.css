@@ -1,1 +1,32 @@
 /* All style elements for your extension go here */
+.browser-speech-recognition input {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.browser-speech-recognition .bsr-commands > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.browser-speech-recognition .bsr-commands > div > input {
+	width: 40%;
+}
+
+.browser-speech-recognition .bsr-replacements > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.browser-speech-recognition .bsr-replacements > div > input {
+	width: 45%;
+}
+
+.browser-speech-recognition input[type=checkbox] {
+	display: flex;
+	align-self: end;
+}

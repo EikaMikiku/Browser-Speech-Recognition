@@ -1,63 +1,129 @@
-// The main script for the extension
-// The following are examples of some basic extension functionality
-
-//You'll likely need to import extension_settings, getContext, and loadExtensionSettings from extensions.js
-import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
-
-//You'll likely need to import some other functions from the main script
+import { extension_settings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
-// Keep track of where your extension is located, name should match repo name
-const extensionName = "st-extension-example";
+import { BrowserSpeechRecognition } from './bsr.js';
+
+const extensionName = "Browser-Speech-Recognition";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
-const defaultSettings = {};
+const defaultSettings = {
+	enabled: false,
+	language: "",
+	activation: "manual",
+	autoformat: true,
+	autosend: false,
+	cmd_stop: "stop recognition",
+	cmd_send: "send message",
+	cmd_deleteWord: "delete word",
+	cmd_deleteSentence: "delete sentence",
+	cmd_deleteAll: "delete all text",
+	rep1from: "comma",
+	rep1to: ",",
+	rep2from: "question mark",
+	rep2to: "?",
+	rep3from: "exclamation",
+	rep3to: "!",
+	rep4from: "",
+	rep4to: "",
+	rep5from: "",
+	rep5to: ""
+};
 
-
- 
-// Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {
-  //Create the settings if they don't exist
-  extension_settings[extensionName] = extension_settings[extensionName] || {};
-  if (Object.keys(extension_settings[extensionName]).length === 0) {
-    Object.assign(extension_settings[extensionName], defaultSettings);
-  }
+	//Create the settings if they don't exist
+	extension_settings[extensionName] = extension_settings[extensionName] || {};
+	for(let key in defaultSettings) {
+		if(!extension_settings[extensionName].hasOwnProperty(key)) {
+			extension_settings[extensionName][key] = defaultSettings[key];
+		}
+	}
 
-  // Updating settings in the UI
-  $("#example_setting").prop("checked", extension_settings[extensionName].example_setting).trigger("input");
+	console.debug("Browser Speech Recognition", "Settings", extension_settings[extensionName]);
+
+	//Updating settings in the UI
+	//Checkboxes
+	$("#bsr-enabled").prop("checked", extension_settings[extensionName]["enabled"]);
+	$("#bsr-autoformat").prop("checked", extension_settings[extensionName]["autoformat"]);
+	$("#bsr-autosend").prop("checked", extension_settings[extensionName]["autosend"]);
+
+	//Inputs
+	$("#bsr-cmd-stop").val(extension_settings[extensionName]["cmd_stop"]);
+	$("#bsr-cmd-sendmsg").val(extension_settings[extensionName]["cmd_send"]);
+	$("#bsr-cmd-delword").val(extension_settings[extensionName]["cmd_deleteWord"]);
+	$("#bsr-cmd-delsen").val(extension_settings[extensionName]["cmd_deleteSentence"]);
+	$("#bsr-cmd-delall").val(extension_settings[extensionName]["cmd_deleteAll"]);
+
+	$("#bsr-rep-1-from").val(extension_settings[extensionName]["rep1from"]);
+	$("#bsr-rep-1-to").val(extension_settings[extensionName]["rep1to"]);
+	$("#bsr-rep-2-from").val(extension_settings[extensionName]["rep2from"]);
+	$("#bsr-rep-2-to").val(extension_settings[extensionName]["rep2to"]);
+	$("#bsr-rep-3-from").val(extension_settings[extensionName]["rep3from"]);
+	$("#bsr-rep-3-to").val(extension_settings[extensionName]["rep3to"]);
+	$("#bsr-rep-4-from").val(extension_settings[extensionName]["rep4from"]);
+	$("#bsr-rep-4-to").val(extension_settings[extensionName]["rep4to"]);
+	$("#bsr-rep-5-from").val(extension_settings[extensionName]["rep5from"]);
+	$("#bsr-rep-5-to").val(extension_settings[extensionName]["rep5to"]);
+
+	//Selects
+	$("#bsr-language").val(extension_settings[extensionName]["language"]);
+	$("#bsr-activation").val(extension_settings[extensionName]["activation"]);
+
 }
 
-// This function is called when the extension settings are changed in the UI
-function onExampleInput(event) {
-  const value = Boolean($(event.target).prop("checked"));
-  extension_settings[extensionName].example_setting = value;
-  saveSettingsDebounced();
-}
-
-// This function is called when the button is clicked
-function onButtonClick() {
-  // You can do whatever you want here
-  // Let's make a popup appear with the checked setting
-  toastr.info(
-    `The checkbox is ${extension_settings[extensionName].example_setting ? "checked" : "not checked"}`,
-    "A popup appeared because you clicked the button!"
-  );
-}
-
-// This function is called when the extension is loaded
 jQuery(async () => {
-  // This is an example of loading HTML from a file
-  const settingsHtml = await $.get(`${extensionFolderPath}/example.html`);
+	const settingsHtml = await $.get(`${extensionFolderPath}/view.html`);
+	$("#extensions_settings").append(settingsHtml);
 
-  // Append settingsHtml to extensions_settings
-  // extension_settings and extensions_settings2 are the left and right columns of the settings menu
-  // Left should be extensions that deal with system functions and right should be visual/UI related 
-  $("#extensions_settings").append(settingsHtml);
+	//Checkboxes
+	$("#bsr-enabled").on("change", onCheckBoxSettingChange);
+	$("#bsr-autoformat").on("change", onCheckBoxSettingChange);
+	$("#bsr-autosend").on("change", onCheckBoxSettingChange);
 
-  // These are examples of listening for events
-  $("#my_button").on("click", onButtonClick);
-  $("#example_setting").on("input", onExampleInput);
+	//Inputs
+	$("#bsr-cmd-stop").on("input", onInputSettingChange);
+	$("#bsr-cmd-sendmsg").on("input", onInputSettingChange);
+	$("#bsr-cmd-delword").on("input", onInputSettingChange);
+	$("#bsr-cmd-delsen").on("input", onInputSettingChange);
+	$("#bsr-cmd-delall").on("input", onInputSettingChange);
 
-  // Load settings when starting things up (if you have any)
-  loadSettings();
+	$("#bsr-rep-1-from").on("input", onInputSettingChange);
+	$("#bsr-rep-1-to").on("input", onInputSettingChange);
+	$("#bsr-rep-2-from").on("input", onInputSettingChange);
+	$("#bsr-rep-2-to").on("input", onInputSettingChange);
+	$("#bsr-rep-3-from").on("input", onInputSettingChange);
+	$("#bsr-rep-3-to").on("input", onInputSettingChange);
+	$("#bsr-rep-4-from").on("input", onInputSettingChange);
+	$("#bsr-rep-4-to").on("input", onInputSettingChange);
+	$("#bsr-rep-5-from").on("input", onInputSettingChange);
+	$("#bsr-rep-5-to").on("input", onInputSettingChange);
+
+	//Selects
+	$("#bsr-language").on("change", onSelectSettingChange);
+	$("#bsr-activation").on("change", onSelectSettingChange);
+
+	loadSettings();
+    const $button = $('<div id="bsr-mic" class="fa-solid fa-microphone speech-toggle" title="Click to speak"></div>');
+    // For versions before 1.10.10
+    if ($('#send_but_sheld').length == 0) {
+        $('#rightSendForm').prepend($button);
+    } else {
+        $('#send_but_sheld').prepend($button);
+    }
+	let bsr = new BrowserSpeechRecognition(extension_settings, $button);
 });
+
+//Managing setting changes
+function onCheckBoxSettingChange(event) {
+	extension_settings[extensionName][event.target.dataset.setting] = event.target.checked;
+	saveSettingsDebounced();
+}
+
+function onInputSettingChange(event) {
+	extension_settings[extensionName][event.target.dataset.setting] = event.target.value;
+	saveSettingsDebounced();
+}
+
+function onSelectSettingChange(event) {
+	extension_settings[extensionName][event.target.dataset.setting] = event.target.value;
+	saveSettingsDebounced();
+}
