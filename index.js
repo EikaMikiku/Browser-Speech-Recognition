@@ -1,7 +1,7 @@
 import { extension_settings } from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
-import { BrowserSpeechRecognition } from './bsr.js';
+import { BrowserSpeechRecognition } from "./bsr.js";
 
 const extensionName = "Browser-Speech-Recognition";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
@@ -10,11 +10,9 @@ const defaultSettings = {
 	enabled: false,
 	language: "",
 	activation: "manual",
-	autoformat: true,
 	autosend: false,
 	cmd_stop: "stop recognition",
 	cmd_send: "send message",
-	cmd_deleteWord: "delete word",
 	cmd_deleteSentence: "delete sentence",
 	cmd_deleteAll: "delete all text",
 	rep1from: "comma",
@@ -43,13 +41,11 @@ async function loadSettings() {
 	//Updating settings in the UI
 	//Checkboxes
 	$("#bsr-enabled").prop("checked", extension_settings[extensionName]["enabled"]);
-	$("#bsr-autoformat").prop("checked", extension_settings[extensionName]["autoformat"]);
 	$("#bsr-autosend").prop("checked", extension_settings[extensionName]["autosend"]);
 
 	//Inputs
 	$("#bsr-cmd-stop").val(extension_settings[extensionName]["cmd_stop"]);
 	$("#bsr-cmd-sendmsg").val(extension_settings[extensionName]["cmd_send"]);
-	$("#bsr-cmd-delword").val(extension_settings[extensionName]["cmd_deleteWord"]);
 	$("#bsr-cmd-delsen").val(extension_settings[extensionName]["cmd_deleteSentence"]);
 	$("#bsr-cmd-delall").val(extension_settings[extensionName]["cmd_deleteAll"]);
 
@@ -102,14 +98,14 @@ jQuery(async () => {
 	$("#bsr-activation").on("change", onSelectSettingChange);
 
 	loadSettings();
-    const $button = $('<div id="bsr-mic" class="fa-solid fa-microphone speech-toggle" title="Click to speak"></div>');
+    const $button = $("<div id='bsr-mic' class='fa-solid fa-microphone' title='Click to speak'></div>");
     // For versions before 1.10.10
-    if ($('#send_but_sheld').length == 0) {
-        $('#rightSendForm').prepend($button);
+    if ($("#send_but_sheld").length == 0) {
+        $("#rightSendForm").prepend($button);
     } else {
-        $('#send_but_sheld').prepend($button);
+        $("#send_but_sheld").prepend($button);
     }
-	let bsr = new BrowserSpeechRecognition(extension_settings, $button);
+	let bsr = new BrowserSpeechRecognition(() => extension_settings[extensionName], $button);
 });
 
 //Managing setting changes

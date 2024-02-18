@@ -30,3 +30,7 @@
 	display: flex;
 	align-self: end;
 }
+
+#bsr-mic.listening {
+	color: #ff6026;
+}
