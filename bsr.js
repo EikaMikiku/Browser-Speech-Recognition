@@ -1,3 +1,5 @@
+import { sendMessageAsUser } from '../../../../script.js';
+import { getContext } from '../../../extensions.js';
 export { BrowserSpeechRecognition };
 
 const DEBUG_PREFIX = "Browser-Speech-Recognition";
@@ -9,6 +11,7 @@ class BrowserSpeechRecognition {
     inputArea = null;
     inputAreaInitialText = null;
     forceStop = false;
+    sendMsg = false;
 
 	constructor(getSettings, jMicButton) {
 		this.getSettings = getSettings;
@@ -32,8 +35,12 @@ class BrowserSpeechRecognition {
 			}
 		});
 
+		this.initSpeechRecognition();
+	}
+
+	initSpeechRecognition() {
 		if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
-			jMicButton.hide();
+			this.jMicButton.hide();
 			window.toastr.error(
 				"Speech recognition is not supported in this browser.",
 				"Speech recognition activation failed",
@@ -42,15 +49,8 @@ class BrowserSpeechRecognition {
 			return;
 		}
 
-		this.initSpeechRecognition();
-
-		if(this.getSettings().activation === "always") {
-			this.startRecognition();
-		}
-	}
-
-	initSpeechRecognition() {
 		let sr = (window.SpeechRecognition || window.webkitSpeechRecognition);
+
 		this.speechRecognition = new sr();
 
 		this.speechRecognition.continuous = true;
@@ -68,10 +68,11 @@ class BrowserSpeechRecognition {
 				interimTranscript += transcript;
 
 				if(speechEvent.results[i].isFinal) {
+					console.debug(DEBUG_PREFIX, "final result", interimTranscript);
 					interimTranscript = this.parseForCommands(interimTranscript);
 					this.stopRecognition();
 				}
-				this.processResult(interimTranscript);
+				this.processResult(interimTranscript, speechEvent.results[i].isFinal);
 			}
 		};
 
@@ -98,6 +99,10 @@ class BrowserSpeechRecognition {
 				this.jMicButton.css("rotate", "360deg");
 			}
 		};
+
+		if(this.getSettings().activation === "always") {
+			this.startRecognition();
+		}
 	}
 
 	parseForReplacements(input) {
@@ -142,6 +147,7 @@ class BrowserSpeechRecognition {
 		//Send command
 		if(txt.endsWith(settings.cmd_send) && settings.cmd_send) {
 			console.debug(DEBUG_PREFIX, "Send command");
+			this.sendMsg = true;
 			let idx = txt.indexOf(settings.cmd_send);
 			return txt.substring(0, idx).trim();
 		}
@@ -180,16 +186,32 @@ class BrowserSpeechRecognition {
 	}
 
 	formatText(txt) {
-		let capitalised = txt[0].toUpperCase() + txt.substring(1) + ".";
-		return capitalised.replaceAll(/([^\w])\./g,"$1"); //remove ?. !. etc
+		if(txt.length > 0) {
+			let capitalised = txt[0].toUpperCase() + txt.substring(1) + ".";
+			return capitalised.replaceAll(/([^\w])\./g,"$1"); //remove ?. !. etc
+		} else {
+			return txt;
+		}
 	}
 
-	processResult(txt) {
+	processResult(txt, final) {
+		if(this.sendMsg) {
+			this.sendMsg = false;
+			this.inputArea.val("");
+			txt = this.inputAreaInitialText + " " + this.formatText(txt);
+			sendMessageAsUser(txt.trim());
+        	return getContext().generate();
+		}
+
 		if(txt.length > 0) {
 			let newTxt = this.inputAreaInitialText + " " + this.formatText(txt);
 			this.inputArea.val(newTxt.trim());
 		} else {
 			this.inputArea.val(this.inputAreaInitialText.trim());
+		}
+
+		if(final) {
+			this.inputAreaInitialText = this.inputArea.val();
 		}
 	}
 

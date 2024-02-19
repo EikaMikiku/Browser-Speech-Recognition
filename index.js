@@ -27,6 +27,8 @@ const defaultSettings = {
 	rep5to: ""
 };
 
+let bsr = null;
+
 async function loadSettings() {
 	//Create the settings if they don't exist
 	extension_settings[extensionName] = extension_settings[extensionName] || {};
@@ -98,6 +100,7 @@ jQuery(async () => {
 	$("#bsr-activation").on("change", onSelectSettingChange);
 
 	loadSettings();
+
     const $button = $("<div id='bsr-mic' class='fa-solid fa-microphone' title='Click to speak'></div>");
     // For versions before 1.10.10
     if ($("#send_but_sheld").length == 0) {
@@ -105,12 +108,44 @@ jQuery(async () => {
     } else {
         $("#send_but_sheld").prepend($button);
     }
-	let bsr = new BrowserSpeechRecognition(() => extension_settings[extensionName], $button);
+
+	if(extension_settings[extensionName].enabled) {
+		enableBSR();
+	} else {
+		disableBSR();
+	}
 });
 
 //Managing setting changes
+function enableBSR() {
+	let micButton = $("#bsr-mic");
+	micButton.show();
+	if(!bsr) {
+		bsr = new BrowserSpeechRecognition(() => extension_settings[extensionName], micButton);
+	} else {
+		bsr.forceStop = false;
+		bsr.initSpeechRecognition();
+	}
+}
+
+function disableBSR() {
+	let micButton = $("#bsr-mic");
+	micButton.hide();
+	bsr.forceStop = true;
+	bsr.stopRecognition();
+}
+
 function onCheckBoxSettingChange(event) {
 	extension_settings[extensionName][event.target.dataset.setting] = event.target.checked;
+
+	if(event.target.dataset.setting === "enabled") {
+		if(event.target.checked) {
+			enableBSR();
+		} else {
+			disableBSR();
+		}
+	}
+
 	saveSettingsDebounced();
 }
 
@@ -121,5 +156,10 @@ function onInputSettingChange(event) {
 
 function onSelectSettingChange(event) {
 	extension_settings[extensionName][event.target.dataset.setting] = event.target.value;
+
+	if(event.target.dataset.setting === "language") {
+		bsr.initSpeechRecognition();
+	}
+
 	saveSettingsDebounced();
 }
