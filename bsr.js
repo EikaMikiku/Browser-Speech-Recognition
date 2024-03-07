@@ -205,6 +205,7 @@ class BrowserSpeechRecognition {
 
 		if(txt.length > 0) {
 			let newTxt = this.inputAreaInitialText + " " + this.formatText(txt);
+			newTxt = newTxt.replaceAll(/[^\w] ([^\w])/g, "$1"); // Test. ? hello. => Test? hello
 			this.inputArea.val(newTxt.trim());
 		} else {
 			this.inputArea.val(this.inputAreaInitialText.trim());
